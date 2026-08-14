@@ -1,0 +1,16 @@
+# Build output — regenerate with `dotnet build` or `build-release.ps1`
+bin/
+obj/
+publish/
+
+# Release artifacts are published to GitHub Releases, not committed
+*.zip
+
+# IDE / editor
+.vs/
+.idea/
+*.user
+*.suo
+
+# Local crash logs
+crash.log
