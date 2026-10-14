@@ -111,13 +111,35 @@ Windows' animation setting and the browser's reduced-motion preference.
 
 ## Screenshots
 
-![System vitals in dark mode](screenshots/system_vitals_dark.png)
+The current interface, including the Vanta NET background, history graphs, game
+session summaries, and tray quick controls. Captured with sample telemetry and
+example game data for illustration; these are not benchmark results.
 
-![System vitals in light mode](screenshots/system_vitals_light.png)
+**System vitals — dark theme**
 
-![Performance controls](screenshots/performance_control.png)
+![System vitals in dark mode with CPU, GPU, RAM, fan, and network readings](screenshots/system_vitals_dark.png)
 
-![Games section](screenshots/games_section.png)
+**System vitals — light theme**
+
+![System vitals in light mode with the animated network background](screenshots/system_vitals_light.png)
+
+**History — temperature, utilization, and fan speed**
+
+![CPU and GPU history graphs with 5, 15, and 30 minute ranges](screenshots/history_graphs.png)
+
+**Games — recorded session summaries**
+
+![Game session summary showing average usage, peak temperatures, fan RPM, and throttling events](screenshots/games_section.png)
+
+**Performance — fan and graphics controls**
+
+![Performance controls for fan modes, manual fan speeds, and graphics power](screenshots/performance_control.png)
+
+**Tray quick controls**
+
+Single-click the tray icon to open this panel. Double-click to open the dashboard.
+
+![Compact tray panel with live temperatures, fan modes, maximum fan control, theme switch, and navigation](screenshots/tray_quick_controls.png)
 
 ## Project structure
 
