@@ -50,6 +50,7 @@ public partial class MainWindow : Window {
             ThemeSwitch.IsChecked = ThemeManager.Current == AppTheme.Light;
             ThemeSwitch.Checked += OnThemeChanged;
             ThemeSwitch.Unchecked += OnThemeChanged;
+            MotionSwitch.IsChecked = AppearancePreferences.LoadMotion();
         };
 
         try {
@@ -77,6 +78,7 @@ public partial class MainWindow : Window {
         if (pageArg >= 0 && pageArg + 1 < args.Length) {
             switch (args[pageArg + 1].ToLowerInvariant()) {
                 case "games": NavGames.IsChecked = true; break;
+                case "history": NavHistory.IsChecked = true; break;
                 case "performance": NavPerformance.IsChecked = true; break;
                 case "settings": NavSettings.IsChecked = true; break;
             }
@@ -84,6 +86,7 @@ public partial class MainWindow : Window {
 
         _tray.ShowRequested += RestoreFromTray;
         _tray.ExitRequested += () => { _reallyExiting = true; Close(); };
+        InitializeInsights();
 
         _ = PollLoop(_pollCancel.Token);
     }
@@ -97,7 +100,7 @@ public partial class MainWindow : Window {
         var heavyDue = DateTime.MinValue;   // process list + game detection
 
         while (!ct.IsCancellationRequested) {
-            bool visible = _windowVisible;
+            bool visible = _windowVisible || _quickControls.IsVisible;
             var now = DateTime.UtcNow;
 
             bool doFans = now >= fanDue;
@@ -130,6 +133,8 @@ public partial class MainWindow : Window {
     }
 
     private sealed class PollResult {
+        public int CommandRevision { get; init; }
+        public TelemetrySample? Telemetry { get; init; }
         public SystemSnapshot Snapshot { get; init; } = new();
         public byte[]? FanLevels { get; init; }
         public bool FanReadFailed { get; init; }
@@ -140,6 +145,7 @@ public partial class MainWindow : Window {
 
     /// <summary>Worker thread. Touches hardware, never the UI.</summary>
     private PollResult Gather(bool doFans, bool doGpu, bool doState, bool doHeavy) {
+        int commandRevision = Volatile.Read(ref _commandRevision);
         byte[]? fans = null;
         bool fanFailed = false;
         HpBiosData.Throttling? throttling = null;
@@ -164,8 +170,7 @@ public partial class MainWindow : Window {
             if (_windowVisible) processes = _monitor.GetTopProcesses(6, gpuByPid);
         }
 
-        return new PollResult {
-            Snapshot = new SystemSnapshot {
+        var snapshot = new SystemSnapshot {
                 CpuUsagePercent = _monitor.GetCpuUsagePercent(),
                 CpuTempC = _monitor.GetCpuTemperatureC(),
                 Gpu = doGpu ? _monitor.GetGpuStats() : null,
@@ -173,7 +178,18 @@ public partial class MainWindow : Window {
                 Drives = doHeavy ? _monitor.GetDrives() : null,
                 Network = _monitor.GetNetworkStats(),
                 TopProcesses = processes
-            },
+            };
+        var telemetry = new TelemetrySample(DateTime.UtcNow, snapshot.CpuUsagePercent,
+            snapshot.Gpu is { Available: true } ? snapshot.Gpu.UtilizationPercent : null,
+            snapshot.CpuTempC, snapshot.Gpu is { Available: true } ? snapshot.Gpu.TemperatureC : null,
+            fans is { Length: >= 2 } ? HpBiosControl.LevelToRpm(fans[0]) : null,
+            fans is { Length: >= 2 } ? HpBiosControl.LevelToRpm(fans[1]) : null,
+            throttling is HpBiosData.Throttling.On ? true : throttling is HpBiosData.Throttling.Default ? false : null);
+        _games.RecordTelemetry(telemetry);
+        return new PollResult {
+            CommandRevision = commandRevision,
+            Snapshot = snapshot,
+            Telemetry = telemetry,
             FanLevels = fans,
             FanReadFailed = fanFailed,
             Throttling = throttling,
@@ -248,7 +264,8 @@ public partial class MainWindow : Window {
             SetSeverityChip(ThrottleBox, ThrottleText, on ? 2 : 0);
         }
 
-        if (r.MaxFanOn.HasValue) {
+        if (r.MaxFanOn.HasValue && !_hardwareBusy && r.CommandRevision == _commandRevision) {
+            _maxFanReadback = r.MaxFanOn;
             _maxFanOn = r.MaxFanOn.Value;
             MaxFanButton.IsChecked = _maxFanOn;
         }
@@ -256,29 +273,28 @@ public partial class MainWindow : Window {
         if (r.GamesChanged || GamesList.ItemsSource == null) BuildGames();
 
         _tray.UpdateTooltip(s.CpuTempC, gpu is { Available: true } ? gpu.TemperatureC : null, _fanSummary);
+        UpdateInsights(r);
     }
 
     private static int Severity(double c, double warn, double danger) =>
         c >= danger ? 2 : c >= warn ? 1 : 0;
 
     /// <summary>
-    /// Severity in a two-colour world: 0 leaves the reading plain, 1 lays a light
-    /// stipple behind it, 2 inverts it to solid ink. Colour is not available, and
-    /// dithering the glyphs themselves would destroy legibility.
+    /// Temperature warnings get a contrasting chip as well as an accent color.
     /// </summary>
     private void SetSeverityChip(Border box, TextBlock text, int severity) {
         switch (severity) {
             case >= 2:
-                box.Background = (Brush)FindResource("Ink");
-                text.Foreground = (Brush)FindResource("Paper");
+                box.SetResourceReference(Border.BackgroundProperty, "DangerBg");
+                text.SetResourceReference(TextBlock.ForegroundProperty, "Danger");
                 break;
             case 1:
-                box.Background = (Brush)FindResource("Dither1");
-                text.Foreground = (Brush)FindResource("Ink");
+                box.SetResourceReference(Border.BackgroundProperty, "WarnBg");
+                text.SetResourceReference(TextBlock.ForegroundProperty, "Warn");
                 break;
             default:
                 box.Background = Brushes.Transparent;
-                text.Foreground = (Brush)FindResource("Ink");
+                text.SetResourceReference(TextBlock.ForegroundProperty, "TextPrimary");
                 break;
         }
     }
@@ -297,9 +313,9 @@ public partial class MainWindow : Window {
 
             var track = new Border {
                 Height = 8,
-                CornerRadius = new CornerRadius(4),
-                Background = (Brush)FindResource("Track")
+                CornerRadius = new CornerRadius(4)
             };
+            track.SetResourceReference(Border.BackgroundProperty, "Track");
             var fillGrid = new Grid();
             fillGrid.ColumnDefinitions.Add(new ColumnDefinition {
                 Width = new GridLength(Math.Max(0.01, d.UsedPercent), GridUnitType.Star)
@@ -308,9 +324,9 @@ public partial class MainWindow : Window {
                 Width = new GridLength(Math.Max(0.01, 100 - d.UsedPercent), GridUnitType.Star)
             });
             var fill = new Border {
-                CornerRadius = new CornerRadius(4),
-                Background = (Brush)FindResource("AccentRamp")
+                CornerRadius = new CornerRadius(4)
             };
+            fill.SetResourceReference(Border.BackgroundProperty, "AccentRamp");
             Grid.SetColumn(fill, 0);
             fillGrid.Children.Add(fill);
             track.Child = fillGrid;
@@ -330,9 +346,9 @@ public partial class MainWindow : Window {
         foreach (var p in processes) {
             var grid = new Grid { Margin = new Thickness(0, 7, 0, 7) };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(64) });
 
             void Cell(string text, int col, bool primary) {
                 var tb = new TextBlock {
@@ -341,7 +357,9 @@ public partial class MainWindow : Window {
                     TextAlignment = col == 0 ? TextAlignment.Left : TextAlignment.Right,
                     TextTrimming = TextTrimming.CharacterEllipsis
                 };
-                if (primary) tb.Foreground = (Brush)FindResource("TextPrimary");
+                if (primary) tb.SetResourceReference(TextBlock.ForegroundProperty, "TextPrimary");
+                else tb.FontFamily = (FontFamily)FindResource("MonoFace");
+                tb.ToolTip = text;
                 Grid.SetColumn(tb, col);
                 grid.Children.Add(tb);
             }
@@ -438,7 +456,10 @@ public partial class MainWindow : Window {
             Grid.SetColumn(forget, 3);
             grid.Children.Add(forget);
 
-            card.Child = grid;
+            var contents = new StackPanel();
+            contents.Children.Add(grid);
+            contents.Children.Add(SessionDetails(g));
+            card.Child = contents;
             cards.Add(card);
         }
         GamesList.ItemsSource = cards;
@@ -484,22 +505,23 @@ public partial class MainWindow : Window {
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(190) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            // Filled means available, hollow means not — the two-colour way of
-            // saying yes and no without a colour to say it with.
+            // Shape and accompanying text preserve meaning without relying on color.
             var dot = new StackPanel { Orientation = Orientation.Horizontal };
-            dot.Children.Add(new Ellipse {
+            var indicator = new Ellipse {
                 Width = 9, Height = 9,
-                Fill = (Brush)FindResource(supported ? "Ink" : "Paper"),
-                Stroke = (Brush)FindResource("Ink"),
                 StrokeThickness = 2,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 9, 0)
-            });
-            dot.Children.Add(new TextBlock {
+            };
+            indicator.SetResourceReference(Shape.FillProperty, supported ? "Good" : "Paper");
+            indicator.SetResourceReference(Shape.StrokeProperty, supported ? "Good" : "TextMuted");
+            dot.Children.Add(indicator);
+            var featureText = new TextBlock {
                 Text = feature,
-                Style = (Style)FindResource("Label"),
-                Foreground = (Brush)FindResource("TextPrimary")
-            });
+                Style = (Style)FindResource("Label")
+            };
+            featureText.SetResourceReference(TextBlock.ForegroundProperty, "TextPrimary");
+            dot.Children.Add(featureText);
             grid.Children.Add(dot);
 
             var noteText = new TextBlock {
@@ -535,20 +557,37 @@ public partial class MainWindow : Window {
         PageGames.Visibility = NavGames.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         PagePerformance.Visibility = NavPerformance.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         PageSettings.Visibility = NavSettings.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        PageHistory.Visibility = NavHistory.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
 
         PageHeading.Text =
+            NavHistory.IsChecked == true ? "History" :
             NavGames.IsChecked == true ? "Games" :
             NavPerformance.IsChecked == true ? "Performance Control" :
             NavSettings.IsChecked == true ? "Settings" : "System Vitals";
 
+        PageTitleText.Text = NavHistory.IsChecked == true ? "Telemetry history" : NavGames.IsChecked == true ? "Your game library" :
+            NavPerformance.IsChecked == true ? "Performance control" :
+            NavSettings.IsChecked == true ? "System settings" : "System vitals";
+        PageDescription.Text = NavHistory.IsChecked == true ? "Follow the trends behind your performance." : NavGames.IsChecked == true ? "Your sessions, tracked automatically on this machine." :
+            NavPerformance.IsChecked == true ? "Tune your cooling. Set your power. Stay in control." :
+            NavSettings.IsChecked == true ? "Hardware capabilities and the details behind your setup." :
+            "A live pulse of your machine. Everything in view.";
+
         if (NavGames.IsChecked == true) BuildGames();
+        if (NavHistory.IsChecked == true) RefreshHistory();
     }
 
     // ---------- Theme ----------
 
     private void OnThemeChanged(object sender, RoutedEventArgs e) {
         ThemeManager.Apply(ThemeSwitch.IsChecked == true ? AppTheme.Light : AppTheme.Dark);
+        BuildGames();
         Say(ThemeSwitch.IsChecked == true ? "Light theme applied." : "Dark theme applied.");
+    }
+
+    private void OnMotionChanged(object sender, RoutedEventArgs e) {
+        if (!IsLoaded) return;
+        AppearancePreferences.SaveMotion(MotionSwitch.IsChecked == true);
     }
 
     // ---------- Window chrome ----------
@@ -569,6 +608,7 @@ public partial class MainWindow : Window {
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
 
     public void RestoreFromTray() {
+        _quickControls.Hide();
         Show();
         _windowVisible = true;
         WindowState = WindowState.Normal;
@@ -647,22 +687,40 @@ public partial class MainWindow : Window {
     // ---------- Command plumbing ----------
 
     private async void Send(Action hardware, string successMessage) {
+        if (_hardwareBusy) return;
         if (!_biosAvailable) {
             Say("The BIOS interface is not available, so nothing was sent. Restart as Administrator.");
             return;
         }
 
+        _hardwareBusy = true;
+        Interlocked.Increment(ref _commandRevision);
+        _quickControls.UpdateControls(_biosAvailable, true, _maxFanReadback);
         Say("Sending…");
         try {
             await Task.Run(hardware).ConfigureAwait(true);
-            Say(successMessage);
+            try {
+                _maxFanReadback = await Task.Run(() => _bios.GetMaxFan());
+                _maxFanOn = _maxFanReadback.Value;
+                MaxFanButton.IsChecked = _maxFanOn;
+                Say(successMessage);
+            } catch {
+                _maxFanReadback = null;
+                Say(successMessage + " Max-fan status is temporarily unavailable.");
+            }
         } catch (Exception ex) {
             Say($"The machine refused that: {ex.Message}");
+            MaxFanButton.IsChecked = _maxFanReadback;
+        } finally {
+            Interlocked.Increment(ref _commandRevision);
+            _hardwareBusy = false;
+            _quickControls.UpdateControls(_biosAvailable, false, _maxFanReadback);
         }
     }
 
     private void Say(string message) {
         if (StatusText != null) StatusText.Text = message;
+        _quickControls.SetStatus(message);
     }
 
     /// <summary>
@@ -681,6 +739,9 @@ public partial class MainWindow : Window {
     }
 
     protected override void OnClosed(EventArgs e) {
+        _games.CompleteSessions();
+        _quickControls.Close();
+        NetworkBackdrop.Dispose();
         _pollCancel.Cancel();
         _monitor.Dispose();
         _tray.Dispose();

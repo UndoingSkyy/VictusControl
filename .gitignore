@@ -14,3 +14,6 @@ publish/
 
 # Local crash logs
 crash.log
+
+# Local SDK and UI validation output
+.validation/

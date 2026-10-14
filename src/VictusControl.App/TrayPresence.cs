@@ -19,6 +19,8 @@ public sealed class TrayPresence : IDisposable {
 
     public event Action? ShowRequested;
     public event Action? ExitRequested;
+    public event Action? QuickControlsRequested;
+    private readonly System.Windows.Forms.Timer _clickTimer = new();
 
     public TrayPresence() {
         _icon = new NotifyIcon {
@@ -38,7 +40,13 @@ public sealed class TrayPresence : IDisposable {
         menu.Items.Add(exit);
 
         _icon.ContextMenuStrip = menu;
-        _icon.DoubleClick += (_, _) => ShowRequested?.Invoke();
+        _clickTimer.Interval = SystemInformation.DoubleClickTime;
+        _clickTimer.Tick += (_, _) => { _clickTimer.Stop(); QuickControlsRequested?.Invoke(); };
+        _icon.MouseClick += (_, e) => { if (e.Button == MouseButtons.Left) _clickTimer.Start(); };
+        _icon.MouseDoubleClick += (_, e) => {
+            if (e.Button != MouseButtons.Left) return;
+            _clickTimer.Stop(); ShowRequested?.Invoke();
+        };
     }
 
     private static Icon LoadIcon() {
@@ -72,12 +80,13 @@ public sealed class TrayPresence : IDisposable {
         _toldUserItKeepsRunning = true;
         _icon.BalloonTipTitle = "Victus Control is still running";
         _icon.BalloonTipText = "Fan and power settings stay applied. " +
-                               "Double-click the tray icon to reopen, or right-click to quit.";
+                               "Click for quick controls, double-click for the dashboard, or right-click to quit.";
         _icon.BalloonTipIcon = ToolTipIcon.None;
         _icon.ShowBalloonTip(4000);
     }
 
     public void Dispose() {
+        _clickTimer.Dispose();
         _icon.Visible = false;
         _icon.Dispose();
     }

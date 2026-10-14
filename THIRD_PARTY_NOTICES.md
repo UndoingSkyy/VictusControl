@@ -1,5 +1,18 @@
 # Third-Party Notices
 
+## Vanta NET 0.5.24 and Three.js r134 (MIT)
+
+The animated network background bundles these libraries locally in
+`src/VictusControl.App/Assets/Network/`:
+
+- Vanta by Teng Bao: https://github.com/tengbao/vanta (version 0.5.24).
+  Full license: `Assets/Network/VANTA-LICENSE.txt`.
+- Three.js by the Three.js authors: https://github.com/mrdoob/three.js (r134).
+  Full license: `Assets/Network/THREE-LICENSE.txt`.
+
+Microsoft.Web.WebView2 hosts the background in a WPF composition control.
+Package and license information: https://www.nuget.org/packages/Microsoft.Web.WebView2/1.0.3537.50.
+
 ## OmenMon (GPL-3.0)
 
 HP does not publish the WMI/BIOS command interface used to control fan speed,

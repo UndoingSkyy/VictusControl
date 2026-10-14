@@ -1,0 +1,6 @@
+:root { color-scheme: dark; background: #080e1b; }
+:root.light { color-scheme: light; background: #edf3fa; }
+html, body, #network { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+#network { background: radial-gradient(ellipse at 85% 20%, #15334780, transparent 70%); }
+.light #network { background: radial-gradient(ellipse at 85% 20%, #a2d5e650, transparent 70%); }
+canvas { opacity: .65; }

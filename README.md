@@ -22,6 +22,7 @@ Omen Gaming Hub provides access to your laptop's thermal and performance setting
 - Windows 11 on an HP Victus or Omen laptop
 - Administrator privileges (required for fan and power controls)
 - NVIDIA driver (for GPU telemetry on systems with NVIDIA GPUs)
+- Microsoft Edge WebView2 Runtime for the animated network background. If it is unavailable, the native dashboard remains usable with a static background.
 
 ### Installation
 
@@ -33,7 +34,7 @@ Or from the command line:
 
 ```powershell
 dotnet build VictusControl.sln
-cd src\VictusControl.App\bin\Debug\net8.0-windows
+cd src\VictusControl.App\bin\Debug\net8.0-windows10.0.17763.0
 .\VictusControl.App.exe
 ```
 
@@ -49,7 +50,8 @@ The installer creates `C:\Program Files\Victus Control`, installs the app there,
 
 When you first launch Victus Control, it will attempt to connect to your laptop's BIOS interface via WMI. If the connection fails, you will see a message. Administrator elevation is permanent requirement because the HP BIOS WMI interface will not respond to unelevated callers.
 
-The app lives in your system tray when minimized. Click the tray icon to bring it back, or close it entirely when you are done.
+The app lives in your system tray when closed. Click its tray icon for quick controls,
+double-click to open the dashboard, or right-click for Open and Quit.
 
 ## Usage
 
@@ -67,9 +69,45 @@ Note: Manual fan levels are reclaimed by the BIOS fan curve after a few seconds.
 
 Tracks games you have launched. Game detection runs in the background even when the app is minimized in the tray.
 
+Each detected session records duration, average CPU/GPU usage, peak temperatures,
+peak fan RPM, and observed throttling events. These are system-wide readings during
+the session, with averages over available samples. Unavailable sensors show a dash.
+The newest 20 summaries per game are kept locally in `%APPDATA%\VictusControl\games.json`,
+checkpointed every 30 seconds and saved when sessions end. Existing game totals are
+preserved; summaries begin with new sessions. Detection uses sustained 3D activity,
+so non-game graphics apps can occasionally appear; use **Not a game** to exclude them.
+
+### History tab
+
+CPU/GPU temperature, usage, and fan RPM graphs offer 5, 15, and 30 minute views.
+Hover for values at a timestamp. History collects while the app runs, including in
+the tray, and resets when the app exits. Sampling slows in the tray; long outages
+appear as gaps. Missing sensor readings are never recorded as zero.
+
+### Tray quick controls
+
+A single click opens a compact panel with live temperatures, fan RPM, active game,
+four fan modes, maximum fan control, theme switch, and Dashboard/History shortcuts.
+Click outside or press Escape to dismiss. Hardware controls are disabled when the
+BIOS interface is unavailable or a command is pending.
+
 ### Settings
 
-Theme preference (dark/light) is saved between runs. All other settings are read-only hardware queries.
+Theme and network-motion preferences are saved between runs. The Settings page
+reports hardware support and application details.
+
+### Appearance
+
+The dashboard uses navy and cyan surfaces, translucent cards, Bahnschrift headings,
+Segoe UI body text, and monospaced telemetry. Both dark and light themes are available
+in the sidebar. Fonts fall back to standard Windows fonts if needed.
+
+The background runs Vanta NET 0.5.24 with Three.js r134 in a WebView2 composition
+layer beneath the native controls. Scripts are bundled locally; no CDN or internet
+connection is needed at runtime. Mouse and touch movement interact with the network
+without intercepting controls. The **Network motion** switch is saved between runs.
+Animation stops when the window is minimized or hidden in the tray and respects
+Windows' animation setting and the browser's reduced-motion preference.
 
 ## Screenshots
 
@@ -94,6 +132,8 @@ Theme preference (dark/light) is saved between runs. All other settings are read
 ```powershell
 dotnet build VictusControl.sln
 ```
+
+Run the history and session checks with `dotnet run --project tests/VictusControl.Checks`.
 
 ### Supported hardware
 
@@ -131,7 +171,9 @@ If you see "BIOS interface unavailable" on startup:
 
 ### Performance
 
-Victus Control is designed to be lightweight. Typical memory usage is under 50 MB. When the window is minimized, polling intervals increase to reduce CPU usage.
+When the window is minimized, polling intervals increase and the network animation
+is destroyed to reduce CPU/GPU work. The animated background adds WebView2 browser
+processes and GPU usage; switch off **Network motion** for a static background.
 
 ## License
 

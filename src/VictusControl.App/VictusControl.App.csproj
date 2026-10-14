@@ -5,14 +5,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Fonts\Silkscreen-Regular.ttf" />
-    <Resource Include="Fonts\Silkscreen-Bold.ttf" />
-    <Resource Include="Fonts\PixelifySans.ttf" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
+    <Content Include="Assets\Network\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- Composition hosting uses Windows Graphics Capture / WinRT. -->
+    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>

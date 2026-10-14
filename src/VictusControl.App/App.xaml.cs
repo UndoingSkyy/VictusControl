@@ -18,6 +18,7 @@ public partial class App : Application {
         "VictusControl", "crash.log");
 
     private Mutex? _singleInstanceMutex;
+    private bool _ownsMutex;
     private CancellationTokenSource? _pipeCancel;
 
     protected override void OnStartup(StartupEventArgs e) {
@@ -58,7 +59,7 @@ public partial class App : Application {
         _pipeCancel?.Dispose();
         _pipeCancel = null;
 
-        _singleInstanceMutex?.ReleaseMutex();
+        if (_ownsMutex) _singleInstanceMutex?.ReleaseMutex();
         _singleInstanceMutex?.Dispose();
         _singleInstanceMutex = null;
 
@@ -67,6 +68,7 @@ public partial class App : Application {
 
     private bool TryBecomeSingleInstance() {
         _singleInstanceMutex = new Mutex(initiallyOwned: true, name: MutexName, createdNew: out bool createdNew);
+        _ownsMutex = createdNew;
         return createdNew;
     }
 
