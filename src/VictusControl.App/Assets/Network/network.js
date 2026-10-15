@@ -28,8 +28,8 @@
       return;
     }
     const colors = {
-      color: state.light ? 0x007b96 : 0x40ddf2,
-      backgroundColor: state.light ? 0xedf3fa : 0x080e1b
+      color: state.light ? 0x737772 : 0x777b80,
+      backgroundColor: state.light ? 0xeae9e3 : 0x1a1b1d
     };
     // NET chooses additive/subtractive blending only on initialization.
     if (effect && renderedLight !== state.light) stop();
@@ -50,7 +50,7 @@
         scaleMobile: 1.00,
         points: 8,
         maxDistance: 22,
-        spacing: 19,
+        spacing: 20,
         ...colors
       });
       if (!effect.renderer || !effect.scene) throw new Error('WebGL unavailable');

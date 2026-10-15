@@ -1,7 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <FontFamily x:Key="DisplayFace">Bahnschrift, Segoe UI</FontFamily>
+    <FontFamily x:Key="DisplayFace">Segoe UI Variable Display, Segoe UI</FontFamily>
 
     <FontFamily x:Key="MonoFace">Cascadia Mono, Consolas</FontFamily>
     <FontFamily x:Key="BodyFace">Segoe UI Variable Text, Segoe UI</FontFamily>
@@ -92,10 +92,10 @@
                         </Trigger>
 
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentA}"/>
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentA}"/>
-                            <Setter TargetName="Cp" Property="TextElement.Foreground" Value="{DynamicResource OnAccent}"/>
-                            <Setter TargetName="Ico" Property="Stroke" Value="{DynamicResource OnAccent}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentSoft}"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Stroke}"/>
+                            <Setter TargetName="Cp" Property="TextElement.Foreground" Value="{DynamicResource TextPrimary}"/>
+                            <Setter TargetName="Ico" Property="Stroke" Value="{DynamicResource TextPrimary}"/>
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">
                             <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentA}"/>

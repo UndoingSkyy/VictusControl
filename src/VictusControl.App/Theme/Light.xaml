@@ -1,32 +1,29 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <SolidColorBrush x:Key="AccentA" Color="#007B96"/>
-    <SolidColorBrush x:Key="AccentB" Color="#5967D4"/>
-    <SolidColorBrush x:Key="AccentSoft" Color="#D7EFF5"/>
-    <SolidColorBrush x:Key="CardBg" Color="#EFFFFFFF"/>
-    <SolidColorBrush x:Key="CardHover" Color="#E5EFF8"/>
-    <SolidColorBrush x:Key="Danger" Color="#BD254A"/>
-    <SolidColorBrush x:Key="DangerBg" Color="#FFFFDFE7"/>
-    <SolidColorBrush x:Key="Dither1" Color="#E5EFF8"/>
-    <SolidColorBrush x:Key="Dither2" Color="#DFE8F2"/>
-    <SolidColorBrush x:Key="Dither3" Color="#D1DFED"/>
-    <SolidColorBrush x:Key="Dither4" Color="#B6CBE0"/>
-    <SolidColorBrush x:Key="Good" Color="#08785C"/>
-    <SolidColorBrush x:Key="HeaderBg" Color="#C4EDF3FA"/>
-    <SolidColorBrush x:Key="Ink" Color="#152C46"/>
+    <SolidColorBrush x:Key="AccentA" Color="#78582A"/>
+    <SolidColorBrush x:Key="AccentB" Color="#526975"/>
+    <SolidColorBrush x:Key="AccentSoft" Color="#E9E0D1"/>
+    <SolidColorBrush x:Key="CardBg" Color="#FCFBF8"/>
+    <SolidColorBrush x:Key="CardHover" Color="#EEECE6"/>
+    <SolidColorBrush x:Key="Danger" Color="#A43830"/>
+    <SolidColorBrush x:Key="DangerBg" Color="#F6E2DE"/>
+    <SolidColorBrush x:Key="Dither1" Color="#EAE8E1"/>
+    <SolidColorBrush x:Key="Dither2" Color="#EFEEE8"/>
+    <SolidColorBrush x:Key="Dither3" Color="#DAD8D0"/>
+    <SolidColorBrush x:Key="Dither4" Color="#C0BEB5"/>
+    <SolidColorBrush x:Key="Good" Color="#486644"/>
+    <SolidColorBrush x:Key="HeaderBg" Color="#F1F0EB"/>
+    <SolidColorBrush x:Key="Ink" Color="#282925"/>
     <SolidColorBrush x:Key="OnAccent" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="Paper" Color="#F4F8FC"/>
-    <SolidColorBrush x:Key="SidebarBg" Color="#F2F5F8FD"/>
-    <SolidColorBrush x:Key="Stroke" Color="#C6D4E5"/>
-    <SolidColorBrush x:Key="TextMuted" Color="#526D89"/>
-    <SolidColorBrush x:Key="TextPrimary" Color="#152C46"/>
-    <SolidColorBrush x:Key="TextSecondary" Color="#405B78"/>
-    <SolidColorBrush x:Key="Track" Color="#DAE5F0"/>
-    <SolidColorBrush x:Key="Warn" Color="#996000"/>
-    <SolidColorBrush x:Key="WarnBg" Color="#FFFFEAC7"/>
-    <SolidColorBrush x:Key="WindowBg" Color="#EDF3FA"/>
-    <LinearGradientBrush x:Key="AccentRamp" StartPoint="0,1" EndPoint="1,0">
-        <GradientStop Color="#007B96" Offset="0"/>
-        <GradientStop Color="#5967D4" Offset="1"/>
-    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Paper" Color="#F5F4EF"/>
+    <SolidColorBrush x:Key="SidebarBg" Color="#F1F0EB"/>
+    <SolidColorBrush x:Key="Stroke" Color="#D3D1C9"/>
+    <SolidColorBrush x:Key="TextMuted" Color="#686962"/>
+    <SolidColorBrush x:Key="TextPrimary" Color="#282925"/>
+    <SolidColorBrush x:Key="TextSecondary" Color="#52534D"/>
+    <SolidColorBrush x:Key="Track" Color="#E0DED6"/>
+    <SolidColorBrush x:Key="Warn" Color="#825B1D"/>
+    <SolidColorBrush x:Key="WarnBg" Color="#F2E6CE"/>
+    <SolidColorBrush x:Key="WindowBg" Color="#EAE9E3"/>
+    <SolidColorBrush x:Key="AccentRamp" Color="#78582A"/>
 </ResourceDictionary>

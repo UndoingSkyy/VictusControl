@@ -98,12 +98,14 @@ reports hardware support and application details.
 
 ### Appearance
 
-The dashboard uses navy and cyan surfaces, translucent cards, Bahnschrift headings,
-Segoe UI body text, and monospaced telemetry. Both dark and light themes are available
-in the sidebar. Fonts fall back to standard Windows fonts if needed.
+The dashboard uses graphite surfaces, warm off-white text, and muted brass accents,
+with steel-gray chart lines and opaque cards. Light mode uses warm stone surfaces.
+Segoe UI Variable headings and body text pair with monospaced telemetry. Both themes
+are available in the sidebar, with standard Windows font fallbacks.
 
 The background runs Vanta NET 0.5.24 with Three.js r134 in a WebView2 composition
-layer beneath the native controls. Scripts are bundled locally; no CDN or internet
+layer beneath the native controls, with visible neutral network lines and nodes.
+Scripts are bundled locally; no CDN or internet
 connection is needed at runtime. Mouse and touch movement interact with the network
 without intercepting controls. The **Network motion** switch is saved between runs.
 Animation stops when the window is minimized or hidden in the tray and respects
